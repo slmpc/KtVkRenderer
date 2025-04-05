@@ -4,15 +4,20 @@ import dev.slmpc.vkrenderer.graphics.Devices
 import dev.slmpc.vkrenderer.graphics.Instance
 import dev.slmpc.vkrenderer.graphics.Surface
 import dev.slmpc.vkrenderer.graphics.SwapChain
+import dev.slmpc.vkrenderer.graphics.pipeline.Pipelines
 import dev.slmpc.vkrenderer.graphics.shader.Shaders
+import dev.slmpc.vkrenderer.utils.memory.memStack
 import io.github.oshai.kotlinlogging.KLoggable
 import io.github.oshai.kotlinlogging.KLogger
+import org.lwjgl.glfw.GLFW
 import org.lwjgl.vulkan.*
 
 object Context: KLoggable {
     override val logger: KLogger = logger()
 
     var window: Long = 0L; private set
+    var width: Int = 0; private set
+    var height: Int = 0; private set
 
     private lateinit var instance0: Instance
     val instance: VkInstance get() = instance0.instance
@@ -27,15 +32,24 @@ object Context: KLoggable {
     private lateinit var surface0: Surface
     val surface: Long get() = surface0.handle
 
-    private lateinit var swapChain: SwapChain
+    lateinit var swapChain: SwapChain; private set
 
     fun init(window: Long) {
         this.window = window
+        memStack.use { stack ->
+            val pWidth = stack.mallocInt(1)
+            val pHeight = stack.mallocInt(1)
+            GLFW.glfwGetWindowSize(window, pWidth, pHeight)
+            width = pWidth[0]
+            height = pHeight[0]
+        }
+
         instance0 = Instance()
         surface0 = Surface()
         device0 = Devices()
         swapChain = SwapChain()
         Shaders
+        Pipelines
     }
 
     fun render() {
@@ -43,6 +57,7 @@ object Context: KLoggable {
     }
 
     fun cleanup() {
+        Pipelines.destroy()
         Shaders.destroy()
         swapChain.destroy()
         surface0.destroy()
