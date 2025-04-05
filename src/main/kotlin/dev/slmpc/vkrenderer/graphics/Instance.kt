@@ -1,25 +1,33 @@
 package dev.slmpc.vkrenderer.graphics
 
+import dev.slmpc.vkrenderer.Context
 import dev.slmpc.vkrenderer.utils.memory.memStack
+import io.github.oshai.kotlinlogging.KLoggable
+import io.github.oshai.kotlinlogging.KLogger
 import org.lwjgl.glfw.GLFWVulkan
 import org.lwjgl.vulkan.VK13.*
 import org.lwjgl.vulkan.*
 
 import kotlin.use
 
-class Instance {
+class Instance: KLoggable {
+    override val logger: KLogger
+        get() = Context.logger
+
     val instance: VkInstance
 
     init {
         memStack.use { stack ->
             val instanceInfo = VkInstanceCreateInfo.calloc(stack)
+            instanceInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
 
             // Layers
             val layers = getSupportedValidationLayers()
             val enabledLayers = stack.callocPointer(1)
             for (layer in layers) {
                 if (layer == "VK_LAYER_KHRONOS_validation") {
-                    enabledLayers.put(stack.UTF8(layer))
+                    println("VK_LAYER_KHRONOS_validation found")
+                    enabledLayers.put(stack.UTF8(layer)).flip()
                     instanceInfo.ppEnabledLayerNames(enabledLayers)
                     break
                 }
@@ -39,8 +47,8 @@ class Instance {
             // Extensions
             val extensions = getExtensions()
             val enabledExtensions = stack.callocPointer(extensions.size)
-            for (extension in extensions) {
-                enabledExtensions.put(stack.UTF8(extension))
+            extensions.forEachIndexed { index, ext ->
+                enabledExtensions.put(index, stack.UTF8(ext))
             }
             instanceInfo.ppEnabledExtensionNames(enabledExtensions)
 
@@ -63,7 +71,7 @@ class Instance {
             val propsBuf = VkLayerProperties.calloc(numLayers, stack)
             vkEnumerateInstanceLayerProperties(numLayersArr, propsBuf)
             val supportedLayers = mutableListOf<String>()
-            for (i in 0..<numLayers) {
+            for (i in 0 until numLayers) {
                 val props = propsBuf[i]
                 val layerName = props.layerNameString()
                 supportedLayers.add(layerName)
@@ -97,18 +105,18 @@ class Instance {
     private fun getExtensions(): List<String> {
         val extensions = mutableListOf<String>()
 
-        val glfwExtensions = GLFWVulkan.glfwGetRequiredInstanceExtensions()?.stringUTF8
+        val glfwExtensions = GLFWVulkan.glfwGetRequiredInstanceExtensions()
             ?: throw RuntimeException("Failed to find required Vulkan extensions")
 
         val requiredExtensions = listOf<String>(
             "VK_KHR_surface",
             "VK_KHR_win32_surface",
-            "VK_EXT_debug_utils",
         )
 
-        requiredExtensions.forEach {
-            if (glfwExtensions.contains(it)) {
-                extensions.add(it)
+        requiredExtensions.forEach { requiredExtension ->
+            for (i in 0 until glfwExtensions.capacity()) {
+                if (glfwExtensions.getStringUTF8(i) != requiredExtension) continue
+                extensions.add(requiredExtension)
             }
         }
 

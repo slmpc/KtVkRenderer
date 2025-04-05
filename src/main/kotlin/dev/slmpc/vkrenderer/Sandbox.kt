@@ -12,9 +12,11 @@ object Sandbox {
             throw IllegalStateException("Failed to initialize GLFW")
         }
 
+        GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_NO_API)
+        GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_FALSE)
         val glfwWindow = GLFW.glfwCreateWindow(800, 600, "Vulkan Renderer", 0, 0)
 
-        Context.init()
+        Context.init(glfwWindow)
 
         if (glfwWindow == 0L) {
             GLFW.glfwTerminate()
