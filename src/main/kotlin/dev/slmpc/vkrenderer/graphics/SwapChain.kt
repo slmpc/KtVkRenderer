@@ -1,6 +1,8 @@
 package dev.slmpc.vkrenderer.graphics
 
 import dev.slmpc.vkrenderer.Context
+import dev.slmpc.vkrenderer.graphics.image.Image
+import dev.slmpc.vkrenderer.graphics.image.ImageView
 import dev.slmpc.vkrenderer.utils.memory.memStack
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.vulkan.KHRSwapchain.*
@@ -18,6 +20,9 @@ import org.lwjgl.vulkan.VK13.*
 class SwapChain {
 
     val swapChain: Long
+
+    val images: List<Image>
+    val imageViews: List<ImageView>
 
     val imageExtent: VkExtent2D
     val imageCount: Int
@@ -104,10 +109,56 @@ class SwapChain {
             val swapChain = stack.callocLong(1)
             vkCreateSwapchainKHR(Context.device, swapChainCreateInfo, null, swapChain)
             this.swapChain = swapChain[0]
+
+            images = getImagesFromSwapChain()
+            imageViews = getImageViewsFromImages()
+        }
+    }
+
+    private fun getImagesFromSwapChain(): List<Image> {
+        memStack.use { stack ->
+            val count = stack.callocInt(1)
+            vkGetSwapchainImagesKHR(Context.device, swapChain, count, null)
+            val images = stack.callocLong(count[0])
+            vkGetSwapchainImagesKHR(Context.device, swapChain, count, images)
+
+            val result = mutableListOf<Image>()
+            for (index in 0 until count[0]) {
+                result.add(Image(images[index]))
+            }
+            return result
+        }
+    }
+
+    private fun getImageViewsFromImages(): List<ImageView> {
+        memStack.use { stack ->
+            return images.map { image ->
+                val createInfo = VkImageViewCreateInfo.calloc(stack)
+                    .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
+                    .viewType(VK_IMAGE_VIEW_TYPE_2D)
+                    .format(format.format())
+                    .components(VkComponentMapping.calloc(stack)
+                        .r(VK_COMPONENT_SWIZZLE_IDENTITY)
+                        .g(VK_COMPONENT_SWIZZLE_IDENTITY)
+                        .b(VK_COMPONENT_SWIZZLE_IDENTITY)
+                        .a(VK_COMPONENT_SWIZZLE_IDENTITY))
+                    .subresourceRange(VkImageSubresourceRange.calloc(stack)
+                        .aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+                        .baseMipLevel(0)
+                        .levelCount(1)
+                        .baseArrayLayer(0)
+                        .layerCount(1))
+                    .image(image.handle)
+                val imageView = stack.callocLong(1)
+                vkCreateImageView(Context.device, createInfo, null, imageView)
+                ImageView(imageView[0])
+            }
         }
     }
 
     fun destroy() {
+        imageViews.forEach { it.destroy() }
+        // Needn't destroy images, they are destroyed by the swap chain
         vkDestroySwapchainKHR(Context.device, swapChain, null)
     }
 
