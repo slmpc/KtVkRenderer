@@ -3,6 +3,7 @@ package dev.slmpc.vkrenderer.graphics
 import dev.slmpc.vkrenderer.Context
 import dev.slmpc.vkrenderer.utils.memory.memStack
 import org.lwjgl.glfw.GLFWVulkan
+import org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR
 import org.lwjgl.vulkan.VK13.*
 
 class Surface {
@@ -18,6 +19,10 @@ class Surface {
             }
             handle = surface0.get(0)
         }
+    }
+
+    fun destroy() {
+        vkDestroySurfaceKHR(Context.instance, handle, null)
     }
 
 }

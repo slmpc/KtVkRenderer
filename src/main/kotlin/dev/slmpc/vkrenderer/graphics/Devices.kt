@@ -2,9 +2,11 @@ package dev.slmpc.vkrenderer.graphics
 
 import dev.slmpc.vkrenderer.Context
 import dev.slmpc.vkrenderer.utils.memory.memStack
+import dev.slmpc.vkrenderer.utils.vk.checkVkResult
 import io.github.oshai.kotlinlogging.KLoggable
 import io.github.oshai.kotlinlogging.KLogger
 import org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR
+import org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME
 import org.lwjgl.vulkan.VK13.*
 import org.lwjgl.vulkan.VkDevice
 import org.lwjgl.vulkan.VkDeviceCreateInfo
@@ -17,7 +19,7 @@ import org.lwjgl.vulkan.VkQueueFamilyProperties
 class Devices: KLoggable {
     override val logger: KLogger get() = Context.logger
 
-    private val queueFamilyIndices: QueueFamilyIndices
+    val queueFamilyIndices: QueueFamilyIndices
 
     val physicalDevice: VkPhysicalDevice
     val device: VkDevice
@@ -41,10 +43,10 @@ class Devices: KLoggable {
         memStack.use { stack ->
             val deviceCount = stack.mallocInt(1)
             vkEnumeratePhysicalDevices(Context.instance, deviceCount, null)
-            val devices = stack.mallocPointer(deviceCount.get(0))
+            val devices = stack.mallocPointer(deviceCount[0])
             vkEnumeratePhysicalDevices(Context.instance, deviceCount, devices)
 
-            val physicalDevice = VkPhysicalDevice(devices.get(0), Context.instance)
+            val physicalDevice = VkPhysicalDevice(devices[0], Context.instance)
             val deviceProperties = VkPhysicalDeviceProperties.calloc(stack)
             vkGetPhysicalDeviceProperties(physicalDevice, deviceProperties)
             val deviceName = deviceProperties.deviceNameString()
@@ -83,9 +85,17 @@ class Devices: KLoggable {
 
             deviceCreateInfo.pQueueCreateInfos(deviceQueueCreateInfo)
 
+            // Extensions
+            val extensions = getExtensions()
+            val extensionNames = stack.mallocPointer(extensions.size)
+            extensions.forEachIndexed { index, extension ->
+                extensionNames.put(index, stack.UTF8(extension))
+            }
+            deviceCreateInfo.ppEnabledExtensionNames(extensionNames)
+
             val device = stack.callocPointer(1)
-            vkCreateDevice(physicalDevice, deviceCreateInfo, null, device)
-            return VkDevice(device.get(0), physicalDevice, deviceCreateInfo)
+            checkVkResult(vkCreateDevice(physicalDevice, deviceCreateInfo, null, device))
+            return VkDevice(device[0], physicalDevice, deviceCreateInfo)
         }
     }
 
@@ -93,20 +103,20 @@ class Devices: KLoggable {
         memStack.use { stack ->
             val count = stack.mallocInt(1)
             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, count, null)
-            val properties = VkQueueFamilyProperties.calloc(count.get(0), stack)
+            val properties = VkQueueFamilyProperties.calloc(count[0], stack)
             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, count, properties)
 
             var graphicsQueueIndex = Int.MAX_VALUE
             var presentQueueIndex = Int.MAX_VALUE
 
-            for (i in 0 until count.get(0)) {
-                val property = properties.get(i)
+            for (i in 0 until count[0]) {
+                val property = properties[i]
                 if ((property.queueFlags() and VK_QUEUE_GRAPHICS_BIT) != 0) {
                     graphicsQueueIndex = i
                 }
                 val presentSupport = stack.callocInt(1)
                 vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, Context.surface, presentSupport)
-                if (presentSupport.get(0) == VK_TRUE) {
+                if (presentSupport[0] == VK_TRUE) {
                     presentQueueIndex = i
                 }
 
@@ -125,17 +135,23 @@ class Devices: KLoggable {
         memStack.use { stack ->
             val graphicsQueue0 = stack.callocPointer(1)
             vkGetDeviceQueue(device, queueFamilyIndices.graphicsQueue, 0, graphicsQueue0)
-            graphicsQueue = VkQueue(graphicsQueue0.get(0), device)
+            graphicsQueue = VkQueue(graphicsQueue0[0], device)
 
             val presentQueue0 = stack.callocPointer(1)
             vkGetDeviceQueue(device, queueFamilyIndices.presentQueue, 0, presentQueue0)
-            presentQueue = VkQueue(presentQueue0.get(0), device)
+            presentQueue = VkQueue(presentQueue0[0], device)
         }
     }
 
-    private data class QueueFamilyIndices(
+    private fun getExtensions(): List<String> =
+        listOf(
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        )
+
+    data class QueueFamilyIndices(
         val graphicsQueue: Int,
         val presentQueue: Int,
     )
 
 }
+
