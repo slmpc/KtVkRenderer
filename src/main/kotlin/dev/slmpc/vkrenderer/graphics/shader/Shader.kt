@@ -17,43 +17,39 @@ class Shader(
 
     init {
         memStack.use { stack ->
-            readShader(vertexLocation, byteBufferVertex)
-            readShader(fragmentLocation, byteBufferFragment)
+            val byteBufferVertex = readShader(vertexLocation)
+            val byteBufferFragment = readShader(fragmentLocation)
 
             val createInfo = VkShaderModuleCreateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)
-                .pCode(byteBufferVertex)
 
             val shaderModule = stack.callocLong(1)
+
+            // Vertex
+            createInfo.pCode(byteBufferVertex)
             vkCreateShaderModule(Context.device, createInfo, null, shaderModule)
             vertexModule = ShaderModule(shaderModule[0])
 
+            // Fragment
             createInfo.pCode(byteBufferFragment)
             vkCreateShaderModule(Context.device, createInfo, null, shaderModule)
             fragmentModule = ShaderModule(shaderModule[0])
         }
     }
 
-    private fun readShader(location: String, buffer: ByteBuffer) {
-        val bytes = (this::class.java.getResourceAsStream(location)?.readAllBytes()
-            ?: throw Exception("Spir-V Shader $location not found"))
+    private fun readShader(location: String): ByteBuffer {
+        val bytes = this::class.java.getResourceAsStream("/assets/shaders/$location")
+            ?.readAllBytes()
+            ?: throw Exception("Spir-V Shader $location not found")
 
-        if (buffer.capacity() < bytes.size) {
-            MemoryUtil.memRealloc(buffer, bytes.size)
-        }
-
+        val buffer = MemoryUtil.memAlloc(bytes.size)
         buffer.put(bytes)
         buffer.flip()
+        return buffer
     }
 
     fun destroy() {
         vertexModule.destroy()
         fragmentModule.destroy()
     }
-
-    companion object {
-        val byteBufferVertex: ByteBuffer = MemoryUtil.memAlloc(1)
-        val byteBufferFragment: ByteBuffer = MemoryUtil.memAlloc(1)
-    }
-
 }

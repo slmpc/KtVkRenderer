@@ -4,6 +4,7 @@ import dev.slmpc.vkrenderer.graphics.Devices
 import dev.slmpc.vkrenderer.graphics.Instance
 import dev.slmpc.vkrenderer.graphics.Surface
 import dev.slmpc.vkrenderer.graphics.SwapChain
+import dev.slmpc.vkrenderer.graphics.shader.Shaders
 import io.github.oshai.kotlinlogging.KLoggable
 import io.github.oshai.kotlinlogging.KLogger
 import org.lwjgl.vulkan.*
@@ -34,6 +35,7 @@ object Context: KLoggable {
         surface0 = Surface()
         device0 = Devices()
         swapChain = SwapChain()
+        Shaders
     }
 
     fun render() {
@@ -41,6 +43,7 @@ object Context: KLoggable {
     }
 
     fun cleanup() {
+        Shaders.destroy()
         swapChain.destroy()
         surface0.destroy()
         device0.destroy()
