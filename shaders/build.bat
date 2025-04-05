@@ -1,0 +1,2 @@
+glslc -fshader-stage=vertex general.vert.glsl -o ../src/main/resources/assets/shaders/general.vert.spv
+glslc -fshader-stage=fragment general.frag.glsl -o ../src/main/resources/assets/shaders/general.frag.spv
