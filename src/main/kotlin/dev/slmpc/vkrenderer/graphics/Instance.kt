@@ -23,15 +23,12 @@ class Instance: KLoggable {
 
             // Layers
             val layers = getSupportedValidationLayers()
-            val enabledLayers = stack.callocPointer(1)
-            for (layer in layers) {
-                if (layer == "VK_LAYER_KHRONOS_validation") {
-                    println("VK_LAYER_KHRONOS_validation found")
-                    enabledLayers.put(stack.UTF8(layer)).flip()
-                    instanceInfo.ppEnabledLayerNames(enabledLayers)
-                    break
-                }
+            val enabledLayers = stack.callocPointer(layers.size)
+            layers.forEachIndexed { index, layer ->
+                println("Using layer: $layer")
+                enabledLayers.put(index, stack.UTF8(layer))
             }
+            instanceInfo.ppEnabledLayerNames(enabledLayers)
 
             // Application
             val appName = stack.UTF8("Vulkan Renderer")

@@ -5,6 +5,7 @@ import dev.slmpc.vkrenderer.graphics.Instance
 import dev.slmpc.vkrenderer.graphics.Surface
 import dev.slmpc.vkrenderer.graphics.SwapChain
 import dev.slmpc.vkrenderer.graphics.pipeline.Pipelines
+import dev.slmpc.vkrenderer.graphics.pipeline.RenderPasses
 import dev.slmpc.vkrenderer.graphics.shader.Shaders
 import dev.slmpc.vkrenderer.utils.memory.memStack
 import io.github.oshai.kotlinlogging.KLoggable
@@ -49,6 +50,7 @@ object Context: KLoggable {
         device0 = Devices()
         swapChain = SwapChain()
         Shaders
+        RenderPasses
         Pipelines
     }
 
@@ -58,6 +60,7 @@ object Context: KLoggable {
 
     fun cleanup() {
         Pipelines.destroy()
+        RenderPasses.destroy()
         Shaders.destroy()
         swapChain.destroy()
         surface0.destroy()

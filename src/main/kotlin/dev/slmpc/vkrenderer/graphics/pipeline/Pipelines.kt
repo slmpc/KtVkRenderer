@@ -9,7 +9,7 @@ object Pipelines {
     val GENERAL = GraphicsPipeline(
         Context.width, Context.height,
         VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        Shaders.GENERAL
+        RenderPasses.DEFAULT, Shaders.GENERAL
     )
 
     fun destroy() {

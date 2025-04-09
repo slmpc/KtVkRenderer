@@ -37,3 +37,6 @@ bin/
 
 ### Shaders ###
 *.spv
+
+### Logs ###
+*.log

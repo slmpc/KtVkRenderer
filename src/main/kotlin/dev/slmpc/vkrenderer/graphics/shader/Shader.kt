@@ -4,6 +4,7 @@ import dev.slmpc.vkrenderer.Context
 import dev.slmpc.vkrenderer.utils.memory.memStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.VK13.*
+import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo
 import org.lwjgl.vulkan.VkShaderModuleCreateInfo
 import java.nio.ByteBuffer
 
@@ -14,6 +15,8 @@ class Shader(
 
     val vertexModule: ShaderModule
     val fragmentModule: ShaderModule
+
+    val stageInfo: VkPipelineShaderStageCreateInfo.Buffer
 
     init {
         memStack.use { stack ->
@@ -34,6 +37,19 @@ class Shader(
             createInfo.pCode(byteBufferFragment)
             vkCreateShaderModule(Context.device, createInfo, null, shaderModule)
             fragmentModule = ShaderModule(shaderModule[0])
+
+            // Needn't use stack here, because we need to use it when creating the pipeline
+            stageInfo = VkPipelineShaderStageCreateInfo.calloc(2)
+            stageInfo[0]
+               .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
+               .stage(VK_SHADER_STAGE_VERTEX_BIT)
+               .module(vertexModule.handle)
+               .pName(entryPoint)
+            stageInfo[1]
+               .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
+               .stage(VK_SHADER_STAGE_FRAGMENT_BIT)
+               .module(fragmentModule.handle)
+               .pName(entryPoint)
         }
     }
 
@@ -51,5 +67,9 @@ class Shader(
     fun destroy() {
         vertexModule.destroy()
         fragmentModule.destroy()
+    }
+
+    companion object {
+        private val entryPoint = MemoryUtil.memUTF8("main")
     }
 }
