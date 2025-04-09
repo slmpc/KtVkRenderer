@@ -49,8 +49,9 @@ object Context: KLoggable {
         surface0 = Surface()
         device0 = Devices()
         swapChain = SwapChain()
-        Shaders
         RenderPasses
+        swapChain.createFrameBuffers(RenderPasses.DEFAULT)
+        Shaders
         Pipelines
     }
 
@@ -60,9 +61,9 @@ object Context: KLoggable {
 
     fun cleanup() {
         Pipelines.destroy()
-        RenderPasses.destroy()
         Shaders.destroy()
         swapChain.destroy()
+        RenderPasses.destroy()
         surface0.destroy()
         device0.destroy()
         instance0.destroy()

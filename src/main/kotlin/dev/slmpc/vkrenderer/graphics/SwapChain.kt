@@ -3,7 +3,9 @@ package dev.slmpc.vkrenderer.graphics
 import dev.slmpc.vkrenderer.Context
 import dev.slmpc.vkrenderer.graphics.image.Image
 import dev.slmpc.vkrenderer.graphics.image.ImageView
+import dev.slmpc.vkrenderer.graphics.pipeline.RenderPass
 import dev.slmpc.vkrenderer.utils.memory.memStack
+import dev.slmpc.vkrenderer.utils.vk.checkVkResult
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.vulkan.KHRSwapchain.*
 import org.lwjgl.vulkan.*
@@ -23,12 +25,16 @@ class SwapChain {
 
     val images: List<Image>
     val imageViews: List<ImageView>
+    lateinit var frameBuffers: List<Long>; private set
 
     val imageExtent: VkExtent2D
     val imageCount: Int
     val format: VkSurfaceFormatKHR
     val transform: Int
     val presentMode: Int
+
+    var windowWidth = 0; private set
+    var windowHeight = 0; private set
 
     init {
         memStack.use { stack ->
@@ -67,6 +73,8 @@ class SwapChain {
             imageExtent = VkExtent2D.calloc(stack)
                 .width(windowWidth[0].coerceIn(capabilities.minImageExtent().width(), capabilities.maxImageExtent().width()))
                 .height(windowHeight[0].coerceIn(capabilities.minImageExtent().height(), capabilities.maxImageExtent().height()))
+            this.windowWidth = windowWidth[0]
+            this.windowHeight = windowHeight[0]
 
             transform = capabilities.currentTransform()
 
@@ -156,9 +164,29 @@ class SwapChain {
         }
     }
 
+    fun createFrameBuffers(renderPass: RenderPass) {
+        memStack.use { stack ->
+            val frameBuffers = mutableListOf<Long>()
+            val pFrameBuffer = stack.callocLong(1)
+            repeat(images.size) {
+                val createInfo = VkFramebufferCreateInfo.calloc(stack)
+                    .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
+                    .renderPass(renderPass.renderPass)
+                    .layers(1)
+                    .width(windowWidth)
+                    .height(windowHeight)
+                    .pAttachments(stack.longs(imageViews[it].handle))
+                checkVkResult(vkCreateFramebuffer(Context.device, createInfo, null, pFrameBuffer))
+                frameBuffers.add(pFrameBuffer[0])
+            }
+            this.frameBuffers = frameBuffers
+        }
+    }
+
     fun destroy() {
-        imageViews.forEach { it.destroy() }
         // Needn't destroy images, they are destroyed by the swap chain
+        imageViews.forEach { it.destroy() }
+        frameBuffers.forEach { vkDestroyFramebuffer(Context.device, it, null) }
         vkDestroySwapchainKHR(Context.device, swapChain, null)
     }
 
