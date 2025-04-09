@@ -3,6 +3,7 @@ package dev.slmpc.vkrenderer.graphics.pipeline
 import dev.slmpc.vkrenderer.Context
 import dev.slmpc.vkrenderer.utils.memory.memStack
 import dev.slmpc.vkrenderer.utils.vk.checkVkResult
+import org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkAttachmentDescription
 import org.lwjgl.vulkan.VkAttachmentReference
@@ -24,7 +25,7 @@ class RenderPass {
                 .format(Context.swapChain.format.format())
                 .samples(VK_SAMPLE_COUNT_1_BIT)
                 .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                .finalLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+                .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
                 .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
                 .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
                 .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)

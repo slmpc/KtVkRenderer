@@ -70,7 +70,7 @@ class SwapChain {
             val windowWidth = stack.callocInt(1)
             val windowHeight = stack.callocInt(1)
             GLFW.glfwGetWindowSize(Context.window, windowWidth, windowHeight)
-            imageExtent = VkExtent2D.calloc(stack)
+            imageExtent = VkExtent2D.calloc()
                 .width(windowWidth[0].coerceIn(capabilities.minImageExtent().width(), capabilities.maxImageExtent().width()))
                 .height(windowHeight[0].coerceIn(capabilities.minImageExtent().height(), capabilities.maxImageExtent().height()))
             this.windowWidth = windowWidth[0]
@@ -115,7 +115,7 @@ class SwapChain {
 
             // Create swap chain
             val swapChain = stack.callocLong(1)
-            vkCreateSwapchainKHR(Context.device, swapChainCreateInfo, null, swapChain)
+            checkVkResult(vkCreateSwapchainKHR(Context.device, swapChainCreateInfo, null, swapChain))
             this.swapChain = swapChain[0]
 
             images = getImagesFromSwapChain()
@@ -158,7 +158,7 @@ class SwapChain {
                         .layerCount(1))
                     .image(image.handle)
                 val imageView = stack.callocLong(1)
-                vkCreateImageView(Context.device, createInfo, null, imageView)
+                checkVkResult(vkCreateImageView(Context.device, createInfo, null, imageView))
                 ImageView(imageView[0])
             }
         }
@@ -173,9 +173,10 @@ class SwapChain {
                     .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                     .renderPass(renderPass.renderPass)
                     .layers(1)
-                    .width(windowWidth)
-                    .height(windowHeight)
+                    .width(imageExtent.width())
+                    .height(imageExtent.height())
                     .pAttachments(stack.longs(imageViews[it].handle))
+                    .attachmentCount(1)
                 checkVkResult(vkCreateFramebuffer(Context.device, createInfo, null, pFrameBuffer))
                 frameBuffers.add(pFrameBuffer[0])
             }
@@ -184,6 +185,7 @@ class SwapChain {
     }
 
     fun destroy() {
+        imageExtent.free()
         // Needn't destroy images, they are destroyed by the swap chain
         imageViews.forEach { it.destroy() }
         frameBuffers.forEach { vkDestroyFramebuffer(Context.device, it, null) }

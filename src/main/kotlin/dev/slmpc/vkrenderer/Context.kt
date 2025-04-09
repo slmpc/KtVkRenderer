@@ -4,9 +4,11 @@ import dev.slmpc.vkrenderer.graphics.Devices
 import dev.slmpc.vkrenderer.graphics.Instance
 import dev.slmpc.vkrenderer.graphics.Surface
 import dev.slmpc.vkrenderer.graphics.SwapChain
+import dev.slmpc.vkrenderer.graphics.command.CommandPool
 import dev.slmpc.vkrenderer.graphics.pipeline.Pipelines
 import dev.slmpc.vkrenderer.graphics.pipeline.RenderPasses
 import dev.slmpc.vkrenderer.graphics.shader.Shaders
+import dev.slmpc.vkrenderer.renderer.GeneralRenderer
 import dev.slmpc.vkrenderer.utils.memory.memStack
 import io.github.oshai.kotlinlogging.KLoggable
 import io.github.oshai.kotlinlogging.KLogger
@@ -35,6 +37,9 @@ object Context: KLoggable {
 
     lateinit var swapChain: SwapChain; private set
 
+    private lateinit var commandPool0: CommandPool
+    val commandPool: Long get() = commandPool0.commandPool
+
     fun init(window: Long) {
         this.window = window
         memStack.use { stack ->
@@ -53,13 +58,21 @@ object Context: KLoggable {
         swapChain.createFrameBuffers(RenderPasses.DEFAULT)
         Shaders
         Pipelines
+
+        commandPool0 = CommandPool()
+        GeneralRenderer
     }
 
     fun render() {
-
+        GeneralRenderer.render()
     }
 
     fun cleanup() {
+        VK10.vkDeviceWaitIdle(device)
+
+        GeneralRenderer.destroy()
+        commandPool0.destroy()
+
         Pipelines.destroy()
         Shaders.destroy()
         swapChain.destroy()
