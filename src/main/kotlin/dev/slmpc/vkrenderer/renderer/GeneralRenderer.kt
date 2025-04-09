@@ -17,13 +17,6 @@ object GeneralRenderer {
     private var drawFinishSem: Long = 0
     private var cmdAvailableFence: Long = 0
 
-    private val clearColor = VkClearColorValue.calloc().apply {
-        float32(0, 0.5f)
-        float32(1, 0.5f)
-        float32(2, 0.5f)
-        float32(3, 1.0f)
-    }
-
     init {
         memStack.use { stack ->
             // Allocate command buffer
@@ -87,7 +80,11 @@ object GeneralRenderer {
             // Record commands
             run {
                 val clearValue = VkClearValue.calloc(1, stack)
-                clearValue[0].color(clearColor)
+                clearValue[0].color(VkClearColorValue.calloc(stack)
+                    .float32(0, 1f)
+                    .float32(1, 0f)
+                    .float32(2, 0f)
+                    .float32(3, 1f))
 
                 val renderPassBeginInfo = VkRenderPassBeginInfo.calloc(stack)
                     .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
@@ -102,20 +99,6 @@ object GeneralRenderer {
                 vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE)
                 run {
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipelines.GENERAL.pipeline.handle)
-
-                    val viewport = VkViewport.calloc(1, stack)
-                        .x(0f)
-                        .y(0f)
-                        .width(Context.swapChain.imageExtent.width().toFloat())
-                        .height(Context.swapChain.imageExtent.height().toFloat())
-                        .minDepth(0f)
-                        .maxDepth(1f)
-                    vkCmdSetViewport(commandBuffer, 0, viewport)
-
-                    val scissor = VkRect2D.calloc(1, stack)
-                        .offset { it.set(0, 0) }
-                        .extent(Context.swapChain.imageExtent)
-                    vkCmdSetScissor(commandBuffer, 0, scissor)
 
                     vkCmdDraw(commandBuffer, 3, 1, 0, 0)
                 }
@@ -151,7 +134,6 @@ object GeneralRenderer {
         vkDestroySemaphore(Context.device, drawFinishSem, null)
         vkDestroySemaphore(Context.device, drawAvailableSem, null)
         vkDestroyFence(Context.device, cmdAvailableFence, null)
-        clearColor.free()
         vkFreeCommandBuffers(Context.device, Context.commandPool, commandBuffer)
     }
 }

@@ -51,7 +51,7 @@ class GraphicsPipeline(
                 .sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO)
                 .polygonMode(VK_POLYGON_MODE_FILL)
                 .cullMode(VK_CULL_MODE_BACK_BIT)
-                .frontFace(VK_FRONT_FACE_CLOCKWISE)
+                .frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE)
                 .lineWidth(1.0f)
                 .depthClampEnable(false)
             pipelineInfo.pRasterizationState(rasterizationInfo)
@@ -66,8 +66,8 @@ class GraphicsPipeline(
             // Tests
             val depthStencilInfo = VkPipelineDepthStencilStateCreateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO)
-                .depthTestEnable(true)
-                .depthWriteEnable(true)
+                .depthTestEnable(false)
+                .depthWriteEnable(false)
                 .depthCompareOp(VK_COMPARE_OP_LESS)
                 .depthBoundsTestEnable(false)
                 .stencilTestEnable(false)
@@ -89,7 +89,7 @@ class GraphicsPipeline(
             pipelineInfo.pColorBlendState(colorBlendInfo)
 
             // Dynamic state
-            val dynamicStateEnables = stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR)
+            val dynamicStateEnables = stack.ints()
             val dynamicStateInfo = VkPipelineDynamicStateCreateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
                 .pDynamicStates(dynamicStateEnables)

@@ -21,16 +21,16 @@ class RenderPass {
                 .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
 
             val attachmentDesc = VkAttachmentDescription.calloc(1, stack)
-            attachmentDesc[0]   // Color attachment
+            attachmentDesc[0]
                 .format(Context.swapChain.format.format())
                 .samples(VK_SAMPLE_COUNT_1_BIT)
-                .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
                 .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
                 .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
                 .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
                 .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                .samples(VK_SAMPLE_COUNT_1_BIT)
+                .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+                .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+
             renderPassInfo.pAttachments(attachmentDesc)
 
             val attachmentRef = VkAttachmentReference.calloc(1, stack)
@@ -48,7 +48,7 @@ class RenderPass {
             dependencies[0]
                 .srcSubpass(VK_SUBPASS_EXTERNAL)
                 .dstSubpass(0)
-                .dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+                .dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT or VK_ACCESS_COLOR_ATTACHMENT_READ_BIT)
                 .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
                 .dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
             renderPassInfo.pDependencies(dependencies)
