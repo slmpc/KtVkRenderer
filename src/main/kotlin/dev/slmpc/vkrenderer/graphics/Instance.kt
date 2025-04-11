@@ -7,6 +7,7 @@ import io.github.oshai.kotlinlogging.KLogger
 import org.lwjgl.glfw.GLFWVulkan
 import org.lwjgl.vulkan.VK13.*
 import org.lwjgl.vulkan.*
+import org.lwjgl.vulkan.EXTDebugUtils.*
 
 import kotlin.use
 
@@ -29,6 +30,25 @@ class Instance: KLoggable {
                 enabledLayers.put(index, stack.UTF8(layer))
             }
             instanceInfo.ppEnabledLayerNames(enabledLayers)
+
+            val debugMessenger = VkDebugUtilsMessengerCreateInfoEXT.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
+                .messageSeverity(
+                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT or
+                            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT or
+                            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+                )
+                .messageType(
+                    VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT or
+                            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT or
+                            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+                )
+                .pfnUserCallback { severity, type, pCallbackData, _ ->
+                    val message = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData).pMessageString()
+                    println("Validation Layer: $message")
+                    VK_FALSE
+                }
+            instanceInfo.pNext(debugMessenger.address())
 
             // Application
             val appName = stack.UTF8("Vulkan Renderer")
@@ -114,8 +134,11 @@ class Instance: KLoggable {
             for (i in 0 until glfwExtensions.capacity()) {
                 if (glfwExtensions.getStringUTF8(i) != requiredExtension) continue
                 extensions.add(requiredExtension)
+                println("Found required extension: $requiredExtension")
             }
         }
+
+        extensions.add(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
 
         return extensions
     }

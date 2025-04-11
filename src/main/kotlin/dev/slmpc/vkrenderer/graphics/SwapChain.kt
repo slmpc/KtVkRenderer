@@ -106,10 +106,12 @@ class SwapChain {
             if (indices.graphicsQueue == indices.presentQueue) {
                 swapChainCreateInfo
                     .pQueueFamilyIndices(stack.ints(indices.graphicsQueue))
+                    .queueFamilyIndexCount(1)
                     .imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
             } else {
                 swapChainCreateInfo
                     .pQueueFamilyIndices(stack.ints(indices.graphicsQueue, indices.presentQueue))
+                    .queueFamilyIndexCount(2)
                     .imageSharingMode(VK_SHARING_MODE_CONCURRENT)
             }
 

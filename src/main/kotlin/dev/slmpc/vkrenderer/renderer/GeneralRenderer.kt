@@ -78,45 +78,44 @@ object GeneralRenderer {
             checkVkResult(vkBeginCommandBuffer(commandBuffer, cmdBufBeginInfo))
 
             // Record commands
-            run {
-                val clearValue = VkClearValue.calloc(1, stack)
-                clearValue[0].color(VkClearColorValue.calloc(stack)
-                    .float32(0, 1f)
-                    .float32(1, 0f)
-                    .float32(2, 0f)
-                    .float32(3, 1f))
+            val clearValue = VkClearValue.calloc(1, stack)
+            clearValue[0].color(VkClearColorValue.calloc(stack)
+                .float32(0, 1f)
+                .float32(1, 0f)
+                .float32(2, 0f)
+                .float32(3, 1f))
 
-                val renderPassBeginInfo = VkRenderPassBeginInfo.calloc(stack)
-                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
-                    .renderPass(RenderPasses.DEFAULT.renderPass)
-                    .framebuffer(Context.swapChain.frameBuffers[imageIndex])
-                    .renderArea { it
-                        .offset { it.set(0, 0) }
-                        .extent(Context.swapChain.imageExtent)
-                    }
-                    .pClearValues(clearValue)
-                    .clearValueCount(1)
-
-                vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE)
-
-                val viewPort = VkViewport.calloc(1, stack)
-                viewPort[0].x(0f).y(0f)
-                    .width(Context.swapChain.imageExtent.width().toFloat())
-                    .height(Context.swapChain.imageExtent.height().toFloat())
-                    .minDepth(0f)
-                    .maxDepth(1f)
-                vkCmdSetViewport(commandBuffer, 0, viewPort)
-
-                val scissor = VkRect2D.calloc(1, stack)
-                scissor[0].offset { it.x(0).y(0) }
+            val renderPassBeginInfo = VkRenderPassBeginInfo.calloc(stack)
+                .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
+                .renderPass(RenderPasses.DEFAULT.renderPass)
+                .framebuffer(Context.swapChain.frameBuffers[imageIndex])
+                .renderArea { it
+                    .offset { it.set(0, 0) }
                     .extent(Context.swapChain.imageExtent)
-                vkCmdSetScissor(commandBuffer, 0, scissor)
+                }
+                .pClearValues(clearValue)
+                .clearValueCount(1)
 
-                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipelines.GENERAL.pipeline.handle)
-                vkCmdDraw(commandBuffer, 3, 1, 0, 0)
+            vkCmdBeginRenderPass(commandBuffer, renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE)
 
-                vkCmdEndRenderPass(commandBuffer)
-            }
+            val viewPort = VkViewport.calloc(1, stack)
+            viewPort[0].x(0f).y(0f)
+                .width(Context.swapChain.imageExtent.width().toFloat())
+                .height(Context.swapChain.imageExtent.height().toFloat())
+                .minDepth(0f)
+                .maxDepth(1f)
+            vkCmdSetViewport(commandBuffer, 0, viewPort)
+
+            val scissor = VkRect2D.calloc(1, stack)
+            scissor[0].offset { it.x(0).y(0) }
+                .extent(Context.swapChain.imageExtent)
+            vkCmdSetScissor(commandBuffer, 0, scissor)
+
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipelines.GENERAL.pipeline.handle)
+            vkCmdDraw(commandBuffer, 3, 1, 0, 0)
+
+            vkCmdEndRenderPass(commandBuffer)
+
             checkVkResult(vkEndCommandBuffer(commandBuffer))
 
             // Submit command buffer
@@ -138,7 +137,6 @@ object GeneralRenderer {
                 .swapchainCount(1)
                 .pSwapchains(stack.longs(Context.swapChain.swapChain))
                 .pImageIndices(stack.ints(imageIndex))
-
             checkVkResult(vkQueuePresentKHR(Context.presentQueue, presentInfo))
         }
     }
