@@ -89,7 +89,7 @@ class GraphicsPipeline(
             pipelineInfo.pColorBlendState(colorBlendInfo)
 
             // Dynamic state
-            val dynamicStateEnables = stack.ints()
+            val dynamicStateEnables = stack.ints(VK_DYNAMIC_STATE_VIEWPORT or VK_DYNAMIC_STATE_SCISSOR)
             val dynamicStateInfo = VkPipelineDynamicStateCreateInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
                 .pDynamicStates(dynamicStateEnables)
