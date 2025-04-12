@@ -52,6 +52,7 @@ class GraphicsPipeline(
                 .polygonMode(VK_POLYGON_MODE_FILL)
                 .cullMode(VK_CULL_MODE_BACK_BIT)
                 .frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE)
+                .rasterizerDiscardEnable(false)
                 .lineWidth(1.0f)
                 .depthClampEnable(false)
             pipelineInfo.pRasterizationState(rasterizationInfo)

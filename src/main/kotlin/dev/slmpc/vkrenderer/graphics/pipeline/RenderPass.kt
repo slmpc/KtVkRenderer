@@ -40,8 +40,9 @@ class RenderPass {
 
             val subpassDesc = VkSubpassDescription.calloc(1, stack)
             subpassDesc[0]
-               .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
-               .pColorAttachments(attachmentRef)
+                .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+                .pColorAttachments(attachmentRef)
+                .colorAttachmentCount(1)
             renderPassInfo.pSubpasses(subpassDesc)
 
             val dependencies = VkSubpassDependency.calloc(1, stack)

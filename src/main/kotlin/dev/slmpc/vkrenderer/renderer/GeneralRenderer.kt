@@ -80,10 +80,10 @@ object GeneralRenderer {
             // Record commands
             val clearValue = VkClearValue.calloc(1, stack)
             clearValue[0].color(VkClearColorValue.calloc(stack)
-                .float32(0, 1f)
-                .float32(1, 0f)
-                .float32(2, 0f)
-                .float32(3, 1f))
+                .float32(0, 0.1f)
+                .float32(1, 0.1f)
+                .float32(2, 0.1f)
+                .float32(3, 1.0f))
 
             val renderPassBeginInfo = VkRenderPassBeginInfo.calloc(stack)
                 .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
